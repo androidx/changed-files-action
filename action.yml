@@ -1,0 +1,44 @@
+name: "AndroidX presubmit"
+description: "Setup dev environment and runs the main AndroidX presubmit task, buildOnServer"
+inputs:
+  path:
+    description: "Path of root project to build from"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: "Install AdoptOpenJDK 11.0.8_10 (x64)"
+      shell: bash
+      run: |
+        set -x
+        mkdir -p $HOME/jdk
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          wget -q "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.8%2B10/OpenJDK11U-jdk_x64_linux_hotspot_11.0.8_10.tar.gz" && \
+          tar -C $HOME/jdk -xzf OpenJDK11U-jdk_x64_linux_hotspot_11.0.8_10.tar.gz
+          echo "JAVA_HOME=$HOME/jdk/jdk-11.0.8+10" >> $GITHUB_ENV
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          wget -q "https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.8%2B10/OpenJDK11U-jdk_x64_mac_hotspot_11.0.8_10.tar.gz" && \
+          tar -C $HOME/jdk -xzf OpenJDK11U-jdk_x64_mac_hotspot_11.0.8_10.tar.gz
+          echo "JAVA_HOME=$HOME/jdk/jdk-11.0.8+10/Contents/Home" >> $GITHUB_ENV
+        else
+          echo "Unsupported OS: $RUNNER_OS"
+          exit 1
+        fi
+
+    - name: "Set environment variables"
+      shell: bash
+      run: |
+        echo "ANDROID_SDK_ROOT=$HOME/Library/Android/sdk" >> $GITHUB_ENV
+        echo "DIST_DIR=$HOME/dist" >> $GITHUB_ENV
+
+    - name: "Create output directory"
+      shell: bash
+      run: mkdir -p $DIST_DIR
+
+    - name: "Run buildOnServer"
+      shell: bash
+      run: |
+        set -x
+        env
+        cd ${{ inputs.path }} && ./gradlew :buildOnServer
+
