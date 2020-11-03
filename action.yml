@@ -46,10 +46,3 @@ runs:
       shell: bash
       run: mkdir -p $DIST_DIR
 
-    - name: "Run buildOnServer"
-      shell: bash
-      run: |
-        set -x
-        env
-        cd ${{ inputs.path }} && ./gradlew :buildOnServer
-
