@@ -12,6 +12,15 @@ runs:
       run: |
         set -x
 
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          echo "JAVA_HOME=$HOME/jdk/zulu11.43.21-ca-jdk11.0.9-linux_x64" >> $GITHUB_ENV
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          echo "JAVA_HOME=$HOME/jdk/zulu11.43.21-ca-jdk11.0.9-macosx_x64" >> $GITHUB_ENV
+        else
+          echo "Unsupported OS: $RUNNER_OS"
+          exit 1
+        fi
+
         if [ -d $HOME/jdk ]; then
           echo "JDK installation detected at $HOME/jdk"
           ls $HOME/jdk
@@ -22,14 +31,9 @@ runs:
         if [ "$RUNNER_OS" == "Linux" ]; then
           wget -q "https://cdn.azul.com/zulu/bin/zulu11.43.21-ca-jdk11.0.9-linux_x64.tar.gz" && \
           tar -C $HOME/jdk -xzf zulu11.43.21-ca-jdk11.0.9-linux_x64.tar.gz
-          echo "JAVA_HOME=$HOME/jdk/zulu11.43.21-ca-jdk11.0.9-linux_x64" >> $GITHUB_ENV
         elif [ "$RUNNER_OS" == "macOS" ]; then
           wget -q "https://cdn.azul.com/zulu/bin/zulu11.43.21-ca-jdk11.0.9-macosx_x64.tar.gz" && \
           tar -C $HOME/jdk -xzf zulu11.43.21-ca-jdk11.0.9-macosx_x64.tar.gz
-          echo "JAVA_HOME=$HOME/jdk/zulu11.43.21-ca-jdk11.0.9-macosx_x64" >> $GITHUB_ENV
-        else
-          echo "Unsupported OS: $RUNNER_OS"
-          exit 1
         fi
 
     - name: "Set environment variables"
