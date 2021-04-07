@@ -3,6 +3,7 @@ description: "Find the added and modified files due to a github event"
 outputs:
   files:
     description: "Paths of all added or modified files"
+    value: ${{ steps.changed-files.outputs.files }}
 runs:
   using: "composite"
   steps:
