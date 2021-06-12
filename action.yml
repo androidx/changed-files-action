@@ -13,18 +13,5 @@ runs:
       run: |
         set -x
 
-        PUSH_BASE_SHA=${{ github.event.before }}
-        PR_BASE_SHA=${{ github.event.pull_request.base.sha }}
-
-        if [ ! -z "$PR_BASE_SHA" ]; then
-          CHANGED_FILES=`git log --no-merges --name-status --pretty=format: "$PR_BASE_SHA..HEAD" | grep -E "^M|^A" | awk '{print $2}'`
-        elif [ ! -z "$PUSH_BASE_SHA" ]; then
-          git fetch origin "$PUSH_BASE_SHA"
-          CHANGED_FILES=`git diff --no-merges --name-status "$PUSH_BASE_SHA" HEAD | grep -E "^M|^A" | awk '{print $2}'`
-        else
-          echo "Only pull_request and push events are supported"
-          exit 1
-        fi
-
-        echo "::set-output name=files::$CHANGED_FILES"
+        ${{ github.action_path }}/find_changed_files.sh
 
