@@ -12,14 +12,16 @@ if [[ $COMPARE != null ]]
 then
     #compare url is set, using it from the API
     COMPARE_API=$(echo $COMPARE | sed 's/github.com\//api.github.com\/repos\//g'| sed 's/"//g')
-    COMPARE_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" $COMPARE_API)
+    # TODO paginate to support more than 100 files
+    COMPARE_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$COMPARE_API?per_page=100")
     # statuses we are interested in: added, modified, renamed. basically, anything but removed
     CHANGED_FILES=$(echo $COMPARE_RESPONSE | jq -r '.files | .[] | select(.status != "removed") | .filename' | tr '\r\n' ' ')
 elif [[ $PR != null ]]
 then
     #this is a PR, using its files API
     PR_FILES_API="$PR/files"
-    PR_FILES_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" $PR_FILES_API)
+    # TODO paginate to support more than 100 files
+    PR_FILES_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$PR_FILES_API?per_page=100")
     CHANGED_FILES=$(echo $PR_FILES_RESPONSE | jq -r '.[] | select(.status != "removed") | .filename' | tr '\r\n' ' ')
 else
     echo "CANNOT FIND CHANGED FILES"
