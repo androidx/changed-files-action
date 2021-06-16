@@ -1,5 +1,10 @@
 name: "Changed files detection"
 description: "Find the added and modified files due to a github event"
+inputs:
+  includeRemoved:
+    description: "If set, removed files will be included in the output"
+    required: false
+    default: false
 outputs:
   files:
     description: "Paths of all added or modified files"
@@ -13,5 +18,5 @@ runs:
       run: |
         set -x
 
-        ${{ github.action_path }}/find_changed_files.sh
+        ${{ github.action_path }}/find_changed_files.sh ${{ inputs.includeRemoved }}
 
