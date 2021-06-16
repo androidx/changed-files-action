@@ -1,14 +1,18 @@
 #!/bin/bash
 # Find changed files in a build either via pull request API or compare API
 set -x
-INCLUDE_REMOVED=$1
-
-if [[ $INCLUDE_REMOVED == true  ]]
-then
-    EXCLUDED_STATUS=""
-else
-    EXCLUDED_STATUS="removed"
-fi
+function set_output_files {
+    local JSON=$1
+    local OUTPUT_VAR=$2
+    local EXCLUDE_STATUS=$3
+    if [[ -z $JSON || -z $OUTPUT_VAR || -z EXCLUDE_STATUS ]]
+    then
+        echo "missing some parameters: $JSON $OUTPUT_VAR $EXCLUDE_STATUS"
+        exit 1
+    fi
+    FILES=$(echo $JSON | jq --arg excludedStatus $EXCLUDED_STATUS -r '.[] | select(.status != "$excludedStatus") | .filename' | tr '\r\n' ' ')
+    echo "::set-output name=${OUTPUT_VAR}::$FILES"
+}
 
 cat $GITHUB_EVENT_PATH
 COMPARE=$(jq '.compare' $GITHUB_EVENT_PATH)
@@ -34,17 +38,17 @@ then
     fi
     # TODO paginate to support more than 100 files
     COMPARE_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$COMPARE_API?per_page=100")
-    CHANGED_FILES=$(echo $COMPARE_RESPONSE | jq --arg excludedStatus $EXCLUDED_STATUS -r '.files | .[] | select(.status != "$excludedStatus") | .filename' | tr '\r\n' ' ')
+    FILES_JSON=$(echo $COMPARE_RESPONSE | jq -r '.files')
 elif [[ $PR != null ]]
 then
     #this is a PR, using its files API
     PR_FILES_API="$PR/files"
     # TODO paginate to support more than 100 files
-    PR_FILES_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$PR_FILES_API?per_page=100")
-    CHANGED_FILES=$(echo $PR_FILES_RESPONSE | jq --arg excludedStatus $EXCLUDED_STATUS -r '.[] | select(.status != "$excludedStatus") | .filename' | tr '\r\n' ' ')
+    FILES_JSON=$(curl -H "Accept: application/vnd.github.v3+json" "$PR_FILES_API?per_page=100")
 else
     echo "CANNOT FIND CHANGED FILES"
     exit 1
 fi
 
-echo "::set-output name=files::$CHANGED_FILES"
+set_output_files "$FILES_JSON" "files" "removed"
+set_output_files "$FILES_JSON" "files_including_removals" ""
