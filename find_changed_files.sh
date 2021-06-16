@@ -20,11 +20,20 @@ echo "------"
 
 if [[ $COMPARE != null ]]
 then
-    #compare url is set, using it from the API
-    COMPARE_API=$(echo $COMPARE | sed 's/github.com\//api.github.com\/repos\//g'| sed 's/"//g')
+    # compare might be a compare url or a commit url (single commit case)
+    if [[ $COMPARE == *"/commit/"* ]]
+    then
+        COMPARE_API=$(echo $COMPARE | sed 's/github.com\//api.github.com\/repos\//g'| sed 's/commit/commits/'| sed 's/"//g')
+    elif  [[ $COMPARE == *"/compare/"* ]]
+    then
+        #compare url is set, using it from the API
+        COMPARE_API=$(echo $COMPARE | sed 's/github.com\//api.github.com\/repos\//g'| sed 's/"//g')
+    else
+        echo "unknown compare format: $COMPARE"
+        exit 1
+    fi
     # TODO paginate to support more than 100 files
     COMPARE_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$COMPARE_API?per_page=100")
-    # statuses we are interested in: added, modified, renamed. basically, anything but removed
     CHANGED_FILES=$(echo $COMPARE_RESPONSE | jq --arg excludedStatus $EXCLUDED_STATUS -r '.files | .[] | select(.status != "$excludedStatus") | .filename' | tr '\r\n' ' ')
 elif [[ $PR != null ]]
 then
