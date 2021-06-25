@@ -22,6 +22,14 @@ echo "compare: |$COMPARE|"
 echo "PR: |$PR|"
 echo "------"
 
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  TOKEN_HEADER=""
+else
+  TOKEN_HEADER="Authorization: token $GITHUB_TOKEN"
+fi
+
+FORMAT_HEADER="Accept: application/vnd.github.v3+json"
+
 if [[ $COMPARE != null ]]
 then
     # compare might be a compare url or a commit url (single commit case)
@@ -37,14 +45,14 @@ then
         exit 1
     fi
     # TODO paginate to support more than 100 files
-    COMPARE_RESPONSE=$(curl -H "Accept: application/vnd.github.v3+json" "$COMPARE_API?per_page=100")
+    COMPARE_RESPONSE=$(curl -H $FORMAT_HEADER -H "$TOKEN_HEADER" "$COMPARE_API?per_page=100")
     FILES_JSON=$(echo $COMPARE_RESPONSE | jq -r '.files')
 elif [[ $PR != null ]]
 then
     #this is a PR, using its files API
     PR_FILES_API="$PR/files"
     # TODO paginate to support more than 100 files
-    FILES_JSON=$(curl -H "Accept: application/vnd.github.v3+json" "$PR_FILES_API?per_page=100")
+    FILES_JSON=$(curl -H $FORMAT_HEADER -H "$TOKEN_HEADER" "$PR_FILES_API?per_page=100")
 else
     echo "CANNOT FIND CHANGED FILES"
     exit 1

@@ -1,5 +1,9 @@
 name: "Changed files detection"
 description: "Find the added and modified files due to a github event"
+inputs:
+  github-token:
+    description: "Github access token."
+    required: false
 outputs:
   files:
     description: "Paths of all added or modified files"
@@ -16,4 +20,6 @@ runs:
       run: |
         set -x
         ${{ github.action_path }}/find_changed_files.sh
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
